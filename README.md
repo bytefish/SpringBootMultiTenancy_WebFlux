@@ -2,7 +2,9 @@
 
 ## Project ##
 
-This project is an example project for Multi Tenancy with the Spring Boot WebFlux Framework.
+This project is an example project for Multi Tenancy with the Spring Boot WebFlux Framework:
+
+* https://www.bytefish.de/blog/spring_boot_multitenancy_webflux.html
 
 ## Additional Reading ##
 
