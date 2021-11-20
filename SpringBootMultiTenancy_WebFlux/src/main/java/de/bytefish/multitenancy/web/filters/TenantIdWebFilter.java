@@ -3,7 +3,7 @@
 
 package de.bytefish.multitenancy.web.filters;
 
-import de.bytefish.multitenancy.constants.Constants;
+import de.bytefish.multitenancy.constants.ApplicationConstants;
 import de.bytefish.multitenancy.web.constants.HeaderNames;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
@@ -19,16 +19,17 @@ public class TenantIdWebFilter implements WebFilter {
     @Override
     public Mono<Void> filter(ServerWebExchange serverWebExchange, WebFilterChain webFilterChain) {
 
-        List<String> result = serverWebExchange.getRequest().getHeaders().get(HeaderNames.TenantId);
+        var headerValues = serverWebExchange.getRequest().getHeaders().get(HeaderNames.TenantId);
 
-        if(result == null || result.size() == 0) {
+        if(headerValues == null || headerValues.size() == 0) {
             return webFilterChain.filter(serverWebExchange);
         }
 
-        String tenantKey = result.get(0);
+        // Make a guess. Just get the first Key, if we have multiple Tenant Headers:
+        String tenantKey = headerValues.get(0);
 
         return webFilterChain
                 .filter(serverWebExchange)
-                .contextWrite(ctx -> ctx.put(Constants.TenantKey, tenantKey));
+                .contextWrite(ctx -> ctx.put(ApplicationConstants.TenantKey, tenantKey));
     }
 }

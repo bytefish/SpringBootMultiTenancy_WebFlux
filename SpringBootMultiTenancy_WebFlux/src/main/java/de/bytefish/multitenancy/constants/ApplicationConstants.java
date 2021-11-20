@@ -3,8 +3,8 @@
 
 package de.bytefish.multitenancy.constants;
 
-public class Constants {
-
+public class ApplicationConstants {
+    
     public static final String TenantKey = "tenant-key";
 
 }

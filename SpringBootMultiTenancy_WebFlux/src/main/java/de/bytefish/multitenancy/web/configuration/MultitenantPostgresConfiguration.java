@@ -11,37 +11,46 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
+import org.springframework.r2dbc.connection.lookup.AbstractRoutingConnectionFactory;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import java.util.HashMap;
 import java.util.Map;
+
+import static java.util.Map.entry;
 
 @Configuration
 @EnableTransactionManagement
 @EnableR2dbcRepositories
-public class MultitenantPostgresConfig extends AbstractR2dbcConfiguration {
+public class MultitenantPostgresConfiguration extends AbstractR2dbcConfiguration {
 
     @Override
     @Bean
     public ConnectionFactory connectionFactory() {
+        var connectionFactory = postgresConnectionFactory();
 
-        PostgresTenantConnectionFactory routingConnectionFactory = new PostgresTenantConnectionFactory();
+        connectionFactory.afterPropertiesSet();
 
-        // Define the Tenants:
-        Map<String, ConnectionFactory> connectionFactories = new HashMap<>();
-
-        connectionFactories.put("TenantOne", tenantOne());
-        connectionFactories.put("TenantTwo", tenantTwo());
-
-        routingConnectionFactory.setTargetConnectionFactories(connectionFactories);
-        routingConnectionFactory.setLenientFallback(false);
-
-        routingConnectionFactory.afterPropertiesSet();
-
-        return routingConnectionFactory;
+        return connectionFactory;
     }
 
-    public ConnectionFactory tenantOne() {
+    private AbstractRoutingConnectionFactory postgresConnectionFactory() {
+        var routingConnectionFactory = new PostgresTenantConnectionFactory();
+
+        routingConnectionFactory.setLenientFallback(false);
+        routingConnectionFactory.setTargetConnectionFactories(tenants());
+
+        return routingConnectionFactory;
+
+    }
+
+    private Map<String, ConnectionFactory> tenants() {
+        return Map.ofEntries(
+                entry("TenantOne", tenantOne()),
+                entry("TenantTwo", tenantTwo())
+        );
+    }
+
+    private ConnectionFactory tenantOne() {
         return new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
                 .host("localhost")
                 .port(5432)
@@ -50,7 +59,7 @@ public class MultitenantPostgresConfig extends AbstractR2dbcConfiguration {
                 .password("test_pwd").build());
     }
 
-    public ConnectionFactory tenantTwo() {
+    private ConnectionFactory tenantTwo() {
         return new PostgresqlConnectionFactory(PostgresqlConnectionConfiguration.builder()
                 .host("localhost")
                 .port(5432)

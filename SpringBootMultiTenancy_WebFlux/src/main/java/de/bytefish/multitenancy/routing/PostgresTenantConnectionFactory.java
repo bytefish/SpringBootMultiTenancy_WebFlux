@@ -3,22 +3,20 @@
 
 package de.bytefish.multitenancy.routing;
 
+import de.bytefish.multitenancy.constants.ApplicationConstants;
 import io.r2dbc.spi.ConnectionFactoryMetadata;
 import org.springframework.r2dbc.connection.lookup.AbstractRoutingConnectionFactory;
 import reactor.core.publisher.Mono;
 
-public class PostgresTenantConnectionFactory extends AbstractRoutingConnectionFactory {
+import static de.bytefish.multitenancy.utils.ReactorUtils.errorIfEmpty;
 
-    public static final String TENANT_KEY = "tenant-key";
+public class PostgresTenantConnectionFactory extends AbstractRoutingConnectionFactory {
 
     static final class PostgresqlConnectionFactoryMetadata implements ConnectionFactoryMetadata {
 
-        /**
-         * The name of the PostgreSQL database product.
-         */
-        public static final String NAME = "PostgreSQL";
-
         static final PostgresqlConnectionFactoryMetadata INSTANCE = new PostgresqlConnectionFactoryMetadata();
+
+        public static final String NAME = "PostgreSQL";
 
         private PostgresqlConnectionFactoryMetadata() {
         }
@@ -33,12 +31,19 @@ public class PostgresTenantConnectionFactory extends AbstractRoutingConnectionFa
     protected Mono<Object> determineCurrentLookupKey() {
         return Mono
                 .deferContextual(Mono::just)
-                .filter(it -> it.hasKey(TENANT_KEY))
-                .map(it -> it.get(TENANT_KEY));
+                .filter(it -> it.hasKey(ApplicationConstants.TenantKey))
+                .map(it -> it.get(ApplicationConstants.TenantKey))
+                .transform(m -> errorIfEmpty(m, () -> new RuntimeException(String.format("ContextView does not contain the Lookup Key '%s'", ApplicationConstants.TenantKey))));
     }
 
     @Override
     public ConnectionFactoryMetadata getMetadata() {
-        return new PostgresqlConnectionFactoryMetadata();
+        // If we don't override this method, it will try to determine the Dialect from the default
+        // ConnectionFactory. This is a problem, because you don't want a "Default ConnectionFactory"
+        // when you cannot resolve the Tenant.
+        //
+        // That's why we explicitly return a fixed PostgresqlConnectionFactoryMetadata. This class
+        // is also defined within the r2dbc library, but it isn't exposed to public.
+        return PostgresqlConnectionFactoryMetadata.INSTANCE;
     }
 }
