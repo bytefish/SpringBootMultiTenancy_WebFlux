@@ -11,8 +11,6 @@ import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 @Component
 public class TenantIdWebFilter implements WebFilter {
 

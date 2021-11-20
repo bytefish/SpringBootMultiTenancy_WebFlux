@@ -40,7 +40,6 @@ public class MultitenantPostgresConfiguration extends AbstractR2dbcConfiguration
         routingConnectionFactory.setTargetConnectionFactories(tenants());
 
         return routingConnectionFactory;
-
     }
 
     private Map<String, ConnectionFactory> tenants() {
